@@ -1,0 +1,16 @@
+- name: Check df -h
+  hosts: linux
+  vars_files:
+    - /etc/ansible/secret.yml
+  gather_facts: true
+  tasks:
+    - name: Run df -h command to get disk space information
+      shell: df -h | awk 'BEGIN{OFS=","} {print $1,$2,$3,$4,$5,$6}'
+      register: df_output
+
+    - name: Append disk space information to local CSV
+      delegate_to: localhost
+      lineinfile:
+        path: /mnt/packages/linux/disk_space_report.csv
+        line: "{{ ansible_hostname }},{{ item }}"
+      loop: "{{ df_output.stdout_lines }}"

@@ -1,0 +1,38 @@
+---
+- name: Update zabbix agent
+  hosts: linux
+  vars_files:
+    - /etc/ansible/secret.yml
+  gather_facts: false
+  tasks:
+    - name: Install chrony
+      yum:
+        name: chrony
+        state: present
+      become: yes
+
+    - name: Rename existing chrony.conf
+      command: mv /etc/chrony.conf /etc/chrony.conf-old
+      become: yes
+
+    - name: Download new chrony.conf
+      get_url:
+        url: http://localrepo.com/packages/linux/chrony.conf
+        dest: /etc/chrony.conf
+      become: yes
+
+    - name: Restart and enable the chrony service
+      systemd:
+        name: chronyd
+        state: restarted
+        enabled: yes
+      become: yes
+
+    - name: Check the synchronization
+      command: chronyc sources
+      register: chrony_output
+      changed_when: false
+
+    - name: Display chrony output
+      debug:
+        var: chrony_output.stdout_lines

@@ -1,0 +1,32 @@
+- name: Install VMware Horizon Agent
+  hosts: windows
+  strategy: free
+  vars_files:
+    - /etc/ansible/secret.yml
+  gather_facts: false
+  tasks:
+    - name: Uninstall previous version of VMware Horizon Agent
+      win_shell: |
+        $uninstallString = (Get-WmiObject -Class Win32_Product | Where { $_.Name -like "VMware Horizon Agent*"}).IdentifyingNumber
+        if ($uninstallString) {
+          msiexec /x $uninstallString /qn /norestart
+        }
+        else {
+          Write-Host "VMware Horizon Agent is not installed on this machine"
+        }
+
+    - name: Create C:\temp folder on Windows host
+      win_file:
+        path: C:\temp
+        state: directory
+
+    - name: Copy VMware Horizon Agent installer to Windows host
+      win_get_url:
+        url: 'http://localrepo.com/packages/windows/VMware-Horizon-Agent-x86_64-2209-8.7.0-20606795.exe'
+        dest: 'C:\temp\VMware-Horizon-Agent-x86_64-2209-8.7.0-20606795.exe'
+
+    - name: Install VMWare Horizon Agent
+      win_package:
+        path: 'C:\temp\VMware-Horizon-Agent-x86_64-2209-8.7.0-20606795.exe'
+        product_id: '{A3E3F6B4-43E2-4F59-BBB2-56B3CA375A9B}'
+        arguments: '/s /v"/qn VDM_SERVER_NAME=connectionserverip VDM_SERVER_USERNAME=DOMAIN.com\user VDM_SERVER_PASSWORD={{ domain_userpasssword }} REBOOT=ReallySuppress"'

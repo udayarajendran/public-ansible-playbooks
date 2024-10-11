@@ -1,0 +1,20 @@
+- name: Create Scheduled Task to Restart Computer
+  hosts: windowsadm
+  vars_files:
+    - /etc/ansible/secret.yml
+  gather_facts: false
+  tasks:
+    - name: Create a trigger for the scheduled task (weekly on Fridays at 2 AM)
+      win_shell: |
+        $trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Friday -At 02:00AM
+        $action = New-ScheduledTaskAction -Execute 'shutdown.exe' -Argument '/r /t 0'
+        $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -WakeToRun -DontStopOnIdleEnd
+        Register-ScheduledTask -TaskName 'Restart Computer on Fridays' -Trigger $trigger -Action $action -Settings $settings -User 'user@domain.com' -Password ('{{ windows_ansible_password }}') -RunLevel Highest -Force
+
+    - name: Display the newly created scheduled task
+      win_shell: Get-ScheduledTask -TaskName 'Restart Computer on Fridays'
+      register: task_info
+
+    - name: Output the scheduled task details
+      debug:
+        var: task_info.stdout_lines

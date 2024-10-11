@@ -1,0 +1,24 @@
+- name: Copy and Install Office 2016 on Windows hosts
+  hosts: windows
+  vars_files:
+    - /etc/ansible/secret.yml
+  gather_facts: false
+  tasks:
+    - name: Install Office 2016 if not already installed
+      block:
+        - name: Create C:\temp\office2016kms folder on Windows host
+          win_file:
+            path: C:\temp\
+            state: directory
+
+        - name: Download Office 2016 zip file to Windows host
+          win_get_url:
+            url: http://localrepo.com/packages/windows/office2016kms.zip
+            dest: C:\temp\office2016kms.zip
+
+        - name: Extract Office 2016 zip file
+          win_shell: Expand-Archive -Path C:\temp\office2016kms.zip -DestinationPath C:\temp\
+
+        - name: Install Office 2016 silently
+          win_command: 'C:\temp\office2016kms\setup.exe /adminfile C:\temp\office2016kms\updates\sdfxoffice2016.MSP'
+

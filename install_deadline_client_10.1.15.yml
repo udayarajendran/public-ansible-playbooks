@@ -1,0 +1,19 @@
+---
+- name: Install Deadline Client on Windows hosts
+  hosts: windows
+  vars_files:
+    - /etc/ansible/secret.yml
+  gather_facts: false
+  tasks:
+    - name: Create C:\temp\deadline folder on Windows host
+      win_file:
+        path: C:\temp\deadline
+        state: directory
+
+    - name: Download Deadline Client installer to Windows host
+      win_get_url:
+        url: 'http://10.0.0.100/packages/windows/DeadlineClient-10.1.15.2-windows-installer.exe'
+        dest: 'C:\temp\deadline\DeadlineClient-10.1.15.2-windows-installer.exe'
+
+    - name: Install Deadline Client silently
+      win_command: 'C:\temp\deadline\DeadlineClient-10.1.15.2-windows-installer.exe --mode unattended --connectiontype Repository --repositorydir "\\path\of\repository\directory" --licenseserver port@serverip --serviceuser DOMAIN.COM\deadline_username --servicepassword {{ servicepassword }} --launcherservice true'

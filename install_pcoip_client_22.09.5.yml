@@ -1,0 +1,19 @@
+- name: Install PCoIP client
+  hosts: windows
+  vars_files:
+    - /etc/ansible/secret.yml
+  gather_facts: false
+  tasks:
+    - name: Create C:\temp folder on Windows host
+      win_file:
+        path: C:\temp
+        state: directory
+
+    - name: Copy PCoIP Client installer to remote machine
+      win_get_url:
+        url: 'http://localrepo.com/packages/windows/pcoip-client_22.09.5.exe'
+        dest: C:\Temp\pcoip-client_22.09.5.exe
+
+    - name: Install PCoIP Client silently
+      ansible.windows.win_shell: C:\Temp\pcoip-client_22.09.5.exe /S
+

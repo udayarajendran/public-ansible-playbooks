@@ -1,0 +1,20 @@
+---
+- name: Install PuTTY and plink.exe
+  hosts: windows
+  vars_files:
+    - /etc/ansible/secret.yml
+  gather_facts: false
+  tasks:
+    - name: Create C:\temp folder on Windows host
+      win_file:
+        path: C:\temp
+        state: directory
+
+    - name: Copy PuTTY Installer to remote machine
+      ansible.windows.win_copy:
+        src: /etc/ansible/packages/Putty/
+        dest: C:\Temp\Putty\
+
+    - name: Install PuTTY silently
+      ansible.windows.win_shell: C:\Temp\Putty\PLINK.EXE /S
+

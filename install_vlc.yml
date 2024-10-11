@@ -1,0 +1,14 @@
+- name: Install VLC
+  hosts: windows
+  vars_files:
+    - /etc/ansible/secret.yml
+  gather_facts: false
+  tasks:
+    - name: Copy VLC installer to remote machine
+      win_get_url:
+        url: http://localrepo.com/packages/windows/vlc-3.0.18-win64.exe
+        dest: C:\temp\vlc-3.0.18-win64.exe
+
+    - name: Install VLC silently
+      ansible.windows.win_shell: C:\temp\vlc-3.0.18-win64.exe /S
+

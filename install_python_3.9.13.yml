@@ -1,0 +1,23 @@
+- name: Install Python 3.9.13
+  hosts: windows
+  vars_files:
+    - /etc/ansible/secret.yml
+  gather_facts: false
+  tasks:
+    - name: Copy Python installer to remote machine
+      win_get_url:
+        url: 'http://localrepo.com/packages/windows/python-3.9.13-amd64.exe'
+        dest: C:\\Temp\\python-3.9.13-amd64.exe
+
+    - name: Create directory
+      ansible.windows.win_file:
+        path: "C:\\Program Files\\Python39"
+        state: directory
+
+    - name: Install Python silently
+      ansible.windows.win_shell: C:\\Temp\\python-3.9.13-amd64.exe /quiet InstallAllUsers=1 TargetDir="C:\Program Files\Python39"
+
+    - name: Create directory
+      ansible.windows.win_file:
+        path: C:\\ProgramData\\rez\\cache
+        state: directory

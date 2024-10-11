@@ -1,0 +1,29 @@
+- name: Remove Scheduled Task to Restart Computer
+  hosts: windowsadm
+  vars_files:
+    - /etc/ansible/secret.yml
+  gather_facts: false
+  tasks:
+    - name: Check if the scheduled task exists
+      win_shell: |
+        $task = Get-ScheduledTask -TaskName 'Restart Computer on Fridays' -ErrorAction SilentlyContinue
+        if ($null -ne $task) { exit 0 } else { exit 1 }
+      register: task_exists
+      ignore_errors: yes
+
+    - name: Remove the scheduled task if it exists
+      win_shell: |
+        Unregister-ScheduledTask -TaskName 'Restart Computer on Fridays' -Confirm:$false
+      when: task_exists.rc == 0
+
+    - name: Verify the scheduled task is removed
+      win_shell: |
+        $task = Get-ScheduledTask -TaskName 'Restart Computer on Fridays' -ErrorAction SilentlyContinue
+        if ($null -eq $task) { exit 0 } else { exit 1 }
+      register: task_info
+      failed_when: task_info.rc != 0 and task_info.rc != 1
+
+    - name: Check if the task was successfully removed
+      debug:
+        msg: "Scheduled task 'Restart Computer on Fridays' does not exist, task successfully removed."
+      when: task_info.rc == 0

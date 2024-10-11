@@ -1,0 +1,77 @@
+---
+- name: Gather information on Windows hosts
+  hosts: windows
+  vars_files:
+    - /etc/ansible/secret.yml
+  gather_facts: false
+  tasks:
+
+    - name: Ensure WinRM is running
+      win_service:
+        name: WinRM
+        start_mode: auto
+        state: started
+      ignore_errors: yes
+
+    - name: Gather DNS Name
+      win_shell: 'ipconfig /all | findstr /R /C:"Host Name"'
+      register: dns_name
+      ignore_errors: yes
+
+    - name: Gather System Make/Model
+      win_shell: 'wmic computersystem get manufacturer,model'
+      register: sys_info
+      ignore_errors: yes
+
+    - name: Gather GPU Info
+      win_shell: 'wmic path win32_videocontroller get caption'
+      register: gpu_info
+      ignore_errors: yes
+
+    - name: Gather RAM Info
+      win_shell: 'wmic memorychip get capacity'
+      register: ram_info
+      ignore_errors: yes
+
+    - name: Gather CPU Info
+      win_shell: 'wmic cpu get name'
+      register: cpu_info
+      ignore_errors: yes
+
+    - name: Gather Disk Type Info
+      win_shell: 'wmic diskdrive get caption, mediatype'
+      register: disk_info
+      ignore_errors: yes
+
+    - name: Ping the Host
+      win_ping:
+      register: ping_status
+      ignore_errors: yes
+
+    - name: Collect all information into a dictionary
+      set_fact:
+        system_info: 
+          Hostname: "{{ inventory_hostname | default('N/A') }}"
+          DNS_Name: "{{ dns_name.stdout.split(':')[1].strip() | default('N/A') }}"
+          System_Make_Model: "{{ sys_info.stdout.strip() | default('N/A') }}"
+          GPU: "{{ gpu_info.stdout.strip() | default('N/A') }}"
+          RAM: "{{ ram_info.stdout.strip() | default('N/A') }}"
+          CPU: "{{ cpu_info.stdout.strip() | default('N/A') }}"
+          Disk_Type: "{{ disk_info.stdout.strip() | default('N/A') }}"
+          Ping_Status: "{{ ping_status.ping | default('N/A') }}"
+
+    - name: Create CSV header (if not exists)
+      ansible.builtin.command: >
+        echo "Hostname,DNS Name,System Make/Model,GPU,RAM,CPU,Disk Type,Ping Status" > /mnt/packages/windows/win_system_specs.csv
+      args:
+        creates: /mnt/packages/windows/win_system_specs.csv
+      delegate_to: localhost
+      run_once: true
+
+    - name: Append system info to CSV
+      copy:
+        content: "{{ system_info.Hostname }},{{ system_info.DNS_Name }},{{ system_info.System_Make_Model }},{{ system_info.GPU }},{{ system_info.RAM }},{{ system_info.CPU }},{{ system_info.Disk_Type }},{{ system_info.Ping_Status }}\n"
+        dest: /mnt/packages/windows/win_system_specs.csv
+        remote_src: no
+      delegate_to: localhost
+      run_once: false

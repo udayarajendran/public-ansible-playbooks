@@ -1,0 +1,22 @@
+- name: Install Chrome Standalone Setup
+  hosts: windows
+  vars_files:
+    - /etc/ansible/secret.yml
+  gather_facts: false
+  tasks:
+    - name: Check if temp directory exists
+      ansible.windows.win_stat:
+        path: C:\\Temp
+      register: temp_dir
+
+    - name: Create temp directory if it does not exist
+      ansible.windows.win_shell: mkdir C:\\Temp
+      when: not temp_dir.stat.exists
+
+    - name: Copy Chrome installer to remote machine
+      ansible.windows.win_copy:
+        src: /etc/ansible/packages/googlechromestandaloneenterprise64.msi
+        dest: C:\\Temp\\googlechromestandaloneenterprise64.msi
+
+    - name: Install Chrome silently
+      ansible.windows.win_shell: msiexec.exe /i C:\\Temp\\googlechromestandaloneenterprise64.msi /qn

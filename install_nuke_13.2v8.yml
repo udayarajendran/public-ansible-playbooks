@@ -1,0 +1,15 @@
+- name: Install Nuke13.2v8
+  hosts: windows
+  vars_files:
+    - /etc/ansible/secret.yml
+  gather_facts: false
+  tasks:
+  - name: Copy the installer to the remote system
+    win_get_url:
+      url: http://localrepo.com/packages/windows/Nuke13.2v8-win-x86_64.exe
+      dest: C:\\temp\\Nuke13.2v9-win-x86_64.exe
+
+  - name: Install the application
+    win_shell: |
+      Start-Process -FilePath "C:\\temp\\Nuke13.2v8-win-x86_64.exe" -ArgumentList "/S", "/ACCEPT-FOUNDRY-EULA" -Wait -NoNewWindow
+
